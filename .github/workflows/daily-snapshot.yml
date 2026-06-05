@@ -1,0 +1,74 @@
+name: Daily Snapshot + Publish to Pages
+
+on:
+  schedule:
+    # 06:00 UTC = 08:00 CEST (summer) / 07:00 CET (winter)
+    - cron: "0 6 * * *"
+  workflow_dispatch:  # manual trigger from Actions tab
+  push:
+    branches: [main]
+    paths:
+      - "morning_brief.py"
+      - "lib/**"
+      - "templates/**"
+      - "config/**"
+      - ".github/workflows/daily-snapshot.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate today's snapshot
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL_BRIEF: claude-sonnet-4-6
+          CLAUDE_MODEL_PORTFOLIO: claude-haiku-4-5-20251001
+          TZ: Europe/Rome
+        run: |
+          python morning_brief.py --no-open
+          ls -la snapshots/ demos/
+
+      - name: Assemble Pages site
+        run: |
+          mkdir -p _site
+          # Landing = today's snapshot (visitor sees the data immediately)
+          cp demos/latest.html _site/index.html
+          # Per-day history accessible at /YYYY-MM-DD.html
+          cp -v demos/*.html _site/ 2>/dev/null || true
+          # Static "about" page (optional)
+          cp -v docs/about.html _site/about.html 2>/dev/null || true
+          ls -la _site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

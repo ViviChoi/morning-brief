@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Morning Brief — About</title>
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css"
+      integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU"
+      crossorigin="anonymous">
+<style>
+  body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 2rem; }
+  .meta { color: var(--pico-muted-color); font-size: .9rem; }
+  .disclaimer { background: #fff8e1; border-left: 4px solid #d4a72c; padding: .8rem 1rem; margin: 1.5rem 0; }
+</style>
+</head><body>
+
+<header>
+  <h1>Morning Brief</h1>
+  <p class="meta">A daily market intelligence snapshot. Updated every morning at 08:00 Europe/Rome by a GitHub Actions cron — no servers, no logins.</p>
+</header>
+
+<section>
+  <h2>What's on the home page</h2>
+  <p>
+    <a href="./">The landing page</a> is today's snapshot of US-equity + crypto markets,
+    paired with a 0–100 BTC bottom-score and a plain-language commentary written by Claude.
+    Built for people who don't normally read finance — charts dominate, every number is annotated,
+    color is consistent (green = up, red = down).
+  </p>
+</section>
+
+<section>
+  <h2>How it's built</h2>
+  <ul>
+    <li>Data: <code>yfinance</code>, <code>CoinGecko</code>, <code>alternative.me</code> (Crypto F&amp;G), <code>farside.co.uk</code> (BTC ETF flows), Binance public futures. All free.</li>
+    <li>AI commentary: Anthropic Claude (Sonnet 4.6). One run = ~$0.05.</li>
+    <li>Schedule: GitHub Actions cron daily; manual trigger from the Actions tab.</li>
+    <li>Hosting: GitHub Pages, deployed via official Actions pipeline. No servers to maintain.</li>
+  </ul>
+  <p>Full source: <a href="https://github.com/ViviChoi/morning-brief">github.com/ViviChoi/morning-brief</a> — MIT-licensed.</p>
+</section>
+
+<section>
+  <h2>Two surfaces in the project</h2>
+  <p>
+    <strong>Daily Brief</strong> (what you see on the home page): public-shareable, static HTML snapshot.
+  </p>
+  <p>
+    <strong>Portfolio Explorer</strong>: a separate local FastAPI tool the owner runs at home —
+    drag-drop your broker CSV, see allocation donut, P&amp;L bars, and a plain-language portfolio
+    explanation. <em>Not deployed publicly</em> because uploading broker statements to a public
+    server is a privacy bad-idea. See the README on GitHub if you want to run it yourself.
+  </p>
+</section>
+
+<div class="disclaimer">
+  <strong>Disclaimer:</strong> This is a personal engineering project. The AI commentary is
+  algorithmically generated from public market data and is <strong>not investment advice</strong>.
+  Don't trade on the basis of what a 0–100 score says — it's a tool for tracking sentiment, not
+  for buying decisions.
+</div>
+
+<footer>
+  <small>
+    Daily history available at <code>/YYYY-MM-DD.html</code>.
+    Last commit: <a href="https://github.com/ViviChoi/morning-brief/commits/main">commits</a>.
+  </small>
+</footer>
+
+</body></html>
