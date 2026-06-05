@@ -126,3 +126,36 @@ def fetch_btc_etf_net_flow_musd() -> float | None:
         return None
     except Exception:
         return None
+
+
+def run(equity_symbols: list[str], crypto_ids: list[str]) -> dict:
+    errors: list[str] = []
+    equity = fetch_equity_quotes(equity_symbols)
+    if not equity:
+        errors.append("equity")
+    crypto = fetch_crypto_prices(crypto_ids)
+    if not crypto:
+        errors.append("crypto")
+    fng = fetch_crypto_fng()
+    if fng is None:
+        errors.append("crypto_fng")
+    funding = fetch_btc_funding_rate()
+    if funding is None:
+        errors.append("btc_signals.funding_rate")
+    lsr = fetch_btc_long_short_ratio()
+    if lsr is None:
+        errors.append("btc_signals.long_short_ratio")
+    etf = fetch_btc_etf_net_flow_musd()
+    if etf is None:
+        errors.append("btc_signals.etf_net_flow_musd")
+    return {
+        "equity": equity,
+        "crypto": crypto,
+        "crypto_fng": fng,
+        "btc_signals": {
+            "funding_rate": funding,
+            "long_short_ratio": lsr,
+            "etf_net_flow_musd": etf,
+        },
+        "_errors": errors,
+    }
