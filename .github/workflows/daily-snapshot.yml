@@ -49,9 +49,27 @@ jobs:
           CLAUDE_MODEL_BRIEF: claude-sonnet-4-6
           CLAUDE_MODEL_PORTFOLIO: claude-haiku-4-5-20251001
           TZ: Europe/Rome
+          PYTHONUNBUFFERED: "1"
         run: |
+          set +e
           python morning_brief.py --no-open
-          ls -la snapshots/ demos/
+          PY_EXIT=$?
+          echo "::notice::morning_brief.py exit code: $PY_EXIT"
+          # Exit 1 = partial snapshot (some data sources blocked from cloud IPs, expected on CI).
+          # Exit other = real failure, propagate.
+          if [ "$PY_EXIT" != "0" ] && [ "$PY_EXIT" != "1" ]; then
+            echo "::error::morning_brief.py failed with unexpected exit code $PY_EXIT"
+            exit $PY_EXIT
+          fi
+          echo "--- snapshots/ ---"
+          ls -la snapshots/ || true
+          echo "--- demos/ ---"
+          ls -la demos/ || true
+          # Hard fail only if nothing got generated at all
+          if [ ! -f demos/latest.html ]; then
+            echo "::error::demos/latest.html missing — fetch pipeline produced nothing"
+            exit 1
+          fi
 
       - name: Assemble Pages site
         run: |
