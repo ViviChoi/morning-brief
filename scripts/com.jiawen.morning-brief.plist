@@ -9,8 +9,6 @@
     <string>__VENV_PYTHON__</string>
     <string>__REPO_ROOT__/morning_brief.py</string>
     <string>--no-open</string>
-    <string>--commit</string>
-    <string>--push</string>
   </array>
   <key>WorkingDirectory</key>
   <string>__REPO_ROOT__</string>

@@ -87,14 +87,16 @@ Install a LaunchAgent that runs the Daily Brief at 08:00 Europe/Rome:
 ```
 morning_brief.py    Daily Brief entrypoint (Surface A)
 webui.py            Portfolio Explorer entrypoint (Surface B)
-lib/                shared backend: fetch, score, claude_brief, claude_portfolio, portfolio, importers/
+lib/                shared backend: fetch, score, claude_brief, claude_portfolio, portfolio, importers/, symbols
 templates/          Daily Brief Jinja template
 webui/              FastAPI app + Portfolio Explorer template
-snapshots/          generated daily JSON
-demos/              generated daily self-contained HTML (shareable)
+launchers/          double-click launchers — .command (Mac) + .bat (Win)
+scripts/            Mac mini launchd installer
+tests/              pytest suite (40 tests, all mocked, no live API calls)
+snapshots/          generated daily JSON (git-ignored)
+demos/              generated daily self-contained HTML (git-ignored)
 portfolios/         uploaded CSVs (git-ignored)
 config/watchlist.json   editable list of equity + crypto tickers
-docs/superpowers/   design spec + implementation plan
 ```
 
 ## Roadmap (P2)

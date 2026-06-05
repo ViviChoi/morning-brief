@@ -13,3 +13,4 @@ demos/*.html
 !demos/.gitkeep
 .pytest_cache/
 tests/__pycache__/
+_private/
