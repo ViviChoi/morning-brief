@@ -2,7 +2,7 @@
 REM Portfolio Explorer - double-click on Windows to start the local WebUI.
 
 setlocal
-cd /d "%~dp0\.."
+pushd "%~dp0\.."
 
 if not exist ".venv\Scripts\python.exe" (
   echo.

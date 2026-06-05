@@ -3,7 +3,7 @@ REM Daily Brief - double-click on Windows to run today's snapshot.
 REM This script lives in launchers\; the project root is one level up.
 
 setlocal
-cd /d "%~dp0\.."
+pushd "%~dp0\.."
 
 if not exist ".venv\Scripts\python.exe" (
   echo.
