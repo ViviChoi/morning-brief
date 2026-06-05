@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import requests
 import yfinance as yf
+from bs4 import BeautifulSoup
 
 _TIMEOUT = 10
 
@@ -93,5 +94,35 @@ def fetch_btc_long_short_ratio() -> float | None:
         r.raise_for_status()
         data = r.json()
         return float(data[0]["longShortRatio"])
+    except Exception:
+        return None
+
+
+def fetch_btc_etf_net_flow_musd() -> float | None:
+    """Return today's (latest row) total BTC ETF net flow in millions of USD.
+
+    Farside lists newest day at the top of the data rows. We pick the first data row.
+    """
+    try:
+        r = requests.get(
+            "https://farside.co.uk/bitcoin-etf-flow-all-data/",
+            headers={"User-Agent": "Mozilla/5.0 morning-brief/1.0"},
+            timeout=_TIMEOUT,
+        )
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find("table")
+        if table is None:
+            return None
+        rows = table.find_all("tr")
+        for tr in rows:
+            cells = [td.get_text(strip=True) for td in tr.find_all("td")]
+            if not cells:
+                continue
+            try:
+                return float(cells[-1].replace(",", ""))
+            except ValueError:
+                continue
+        return None
     except Exception:
         return None
