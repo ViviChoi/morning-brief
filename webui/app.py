@@ -17,6 +17,7 @@ from lib import importers
 from lib import fetch
 from lib import portfolio as portfolio_mod
 from lib import claude_portfolio
+from lib import symbols
 
 
 app = FastAPI(title="Morning Brief — Portfolio Explorer")
@@ -42,15 +43,15 @@ async def upload(file: UploadFile = File(...)) -> dict:
     if not raw_positions:
         raise HTTPException(status_code=400, detail="no positions parsed")
 
-    equity_syms = [p["symbol"] for p in raw_positions if not _looks_crypto(p["symbol"])]
-    crypto_ids = [_to_coingecko_id(p["symbol"]) for p in raw_positions if _looks_crypto(p["symbol"])]
+    equity_syms = [p["symbol"] for p in raw_positions if not symbols.is_crypto(p["symbol"])]
+    crypto_ids = [symbols.to_coingecko_id(p["symbol"]) for p in raw_positions if symbols.is_crypto(p["symbol"])]
     equity_quotes = fetch.fetch_equity_quotes(equity_syms) if equity_syms else {}
     crypto_quotes = fetch.fetch_crypto_prices([c for c in crypto_ids if c]) if crypto_ids else {}
 
     prices: dict[str, float] = {sym: q["price"] for sym, q in equity_quotes.items()}
     for p in raw_positions:
-        if _looks_crypto(p["symbol"]):
-            cg = _to_coingecko_id(p["symbol"])
+        if symbols.is_crypto(p["symbol"]):
+            cg = symbols.to_coingecko_id(p["symbol"])
             if cg and cg in crypto_quotes:
                 prices[p["symbol"]] = crypto_quotes[cg]["price_usd"]
 
@@ -72,16 +73,3 @@ async def upload(file: UploadFile = File(...)) -> dict:
     }
 
 
-_CRYPTO_MAP = {
-    "BTC": "bitcoin", "ETH": "ethereum", "SOL": "solana", "BNB": "binancecoin",
-    "HYPE": "hyperliquid", "TAO": "bittensor", "ADA": "cardano", "XRP": "ripple",
-    "DOGE": "dogecoin", "AVAX": "avalanche-2", "LINK": "chainlink",
-}
-
-
-def _looks_crypto(sym: str) -> bool:
-    return sym.upper() in _CRYPTO_MAP
-
-
-def _to_coingecko_id(sym: str) -> str | None:
-    return _CRYPTO_MAP.get(sym.upper())
