@@ -1,0 +1,4 @@
+Timestamp,Transaction Type,Asset,Quantity Transacted,Spot Price at Transaction,Subtotal,Notes
+2026-01-15T10:00:00Z,Buy,BTC,0.1,42000,4200,Bought BTC
+2026-02-20T11:00:00Z,Buy,ETH,2,2800,5600,Bought ETH
+2026-03-10T12:00:00Z,Sell,BTC,0.02,68000,1360,Sold BTC
