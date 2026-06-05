@@ -1,8 +1,7 @@
-{# templates/dashboard.html - minimal first cut, UX polished in Phase 3 #}
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
-<title>Morning Brief {{ date }}</title>
+<title>Morning Brief — {{ date }}</title>
 <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css"
       integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU"
@@ -12,55 +11,104 @@
         crossorigin="anonymous"></script>
 <style>
   body { max-width: 1100px; margin: 1rem auto; padding: 0 1rem; }
-  .headline { font-size: 1.8rem; line-height: 1.3; margin: 1rem 0; }
-  .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .5rem; }
-  .card { padding: .6rem; border: 1px solid var(--pico-muted-border-color); border-radius: 8px; }
-  .up { color: #1a7f37; } .down { color: #cf222e; }
-  .score-bar { height: 28px; background: linear-gradient(90deg, #cf222e 0%, #d4a72c 30%, #1a7f37 50%, #d4a72c 70%, #cf222e 100%); position: relative; border-radius: 14px; }
-  .score-pointer { position: absolute; top: -6px; width: 4px; height: 40px; background: #1f2328; }
+  .hero { background: var(--pico-card-background-color); border-radius: 12px; padding: 1.2rem; margin: 1rem 0; }
+  .hero h1 { font-size: 2.0rem; line-height: 1.2; margin: 0 0 .5rem; }
+  .hero .tone { color: var(--pico-muted-color); }
+  .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .6rem; }
+  .card { padding: .8rem; border: 1px solid var(--pico-muted-border-color); border-radius: 10px; background: var(--pico-card-background-color); }
+  .card .sym { font-weight: 700; font-size: 1.05rem; }
+  .card .price { font-size: 1.2rem; margin: .2rem 0; }
+  .card .chg { font-weight: 600; }
+  .card .label { color: var(--pico-muted-color); font-size: .8rem; }
+  .up { color: #1a7f37; } .down { color: #cf222e; } .neutral { color: #57606a; }
+  .gauge-wrap { margin: 1rem 0; }
+  .gauge { height: 36px; background: linear-gradient(90deg, #cf222e 0%, #d4a72c 20%, #1a7f37 50%, #d4a72c 80%, #cf222e 100%); position: relative; border-radius: 18px; box-shadow: inset 0 0 6px rgba(0,0,0,.2); }
+  .gauge-marker { position: absolute; top: -8px; width: 6px; height: 52px; background: #1f2328; border-radius: 3px; }
+  .gauge-labels { display: flex; justify-content: space-between; font-size: .75rem; color: var(--pico-muted-color); margin-top: .3rem; }
+  .gauge-rating { text-align: center; font-size: 1.1rem; font-weight: 700; margin-top: .8rem; }
+  details.glossary { margin-top: 2rem; }
+  details.glossary summary { cursor: pointer; font-weight: 600; }
+  details.glossary dl { display: grid; grid-template-columns: 130px 1fr; gap: .4rem .8rem; margin-top: .8rem; }
+  details.glossary dt { font-weight: 600; }
+  [data-tooltip] { border-bottom: 1px dotted var(--pico-muted-color); cursor: help; }
+  .briefblock { white-space: pre-wrap; line-height: 1.55; }
 </style>
 </head><body>
-<header>
-  <h1>Morning Brief — {{ date }}</h1>
-  <p class="headline">{{ commentary.headline or "(no commentary)" }}</p>
-  <p><em>{{ commentary.liquidity_tone }}</em></p>
+
+<header class="hero">
+  <h1>{{ commentary.headline or date }}</h1>
+  <p class="tone"><em>{{ commentary.liquidity_tone }}</em></p>
 </header>
 
 <section>
   <h2>Overview</h2>
   <div class="grid-cards">
   {% for sym, data in equity.items() %}
-    <div class="card"><strong>{{ sym }}</strong><br>
-      ${{ "%.2f"|format(data.price) }}
-      <span class="{{ 'up' if data.change_pct >= 0 else 'down' }}">
+    <div class="card">
+      <div class="sym">{{ sym }}</div>
+      <div class="price">${{ "%.2f"|format(data.price) }}</div>
+      <div class="chg {{ 'up' if data.change_pct >= 0 else 'down' }}">
         {{ "%+.2f"|format(data.change_pct) }}%
-      </span></div>
+      </div>
+      <div class="label">vs prev close ${{ "%.2f"|format(data.prev_close) }}</div>
+    </div>
   {% endfor %}
   {% for cg_id, data in crypto.items() %}
-    <div class="card"><strong>{{ cg_id }}</strong><br>
-      ${{ "%.2f"|format(data.price_usd) }}
-      <span class="{{ 'up' if data.change_24h_pct >= 0 else 'down' }}">
+    <div class="card">
+      <div class="sym">{{ cg_id }}</div>
+      <div class="price">${{ "%.2f"|format(data.price_usd) }}</div>
+      <div class="chg {{ 'up' if data.change_24h_pct >= 0 else 'down' }}">
         {{ "%+.2f"|format(data.change_24h_pct) }}%
-      </span></div>
+      </div>
+      <div class="label">24h change</div>
+    </div>
   {% endfor %}
+  {% if crypto_fng %}
+    <div class="card">
+      <div class="sym" data-tooltip="Crypto Fear & Greed: 0 = max fear, 100 = max greed">F&amp;G</div>
+      <div class="price">{{ crypto_fng.value }}</div>
+      <div class="chg neutral">{{ crypto_fng.classification }}</div>
+      <div class="label">crypto sentiment</div>
+    </div>
+  {% endif %}
   </div>
 </section>
 
-<section>
-  <h2>BTC Bottom Score: {{ btc_score.total or "—" }} <small>({{ btc_score.rating }})</small></h2>
-  <div class="score-bar"><div class="score-pointer" style="left: {{ btc_score.total or 50 }}%"></div></div>
+<section class="gauge-wrap">
+  <h2>BTC Bottom Score
+    <small data-tooltip="0 = historical buy zone (extreme fear). 100 = historical sell zone (extreme greed). Built from 4 free indicators: ETF flows, funding rate, fear & greed, and futures long/short ratio.">{{ btc_score.total or "—" }}</small>
+  </h2>
+  <div class="gauge">
+    {% if btc_score.total is not none %}
+      <div class="gauge-marker" style="left: calc({{ btc_score.total }}% - 3px);"></div>
+    {% endif %}
+  </div>
+  <div class="gauge-labels"><span>0 buy</span><span>50 neutral</span><span>100 sell</span></div>
+  <div class="gauge-rating {{ 'up' if (btc_score.total or 50) < 30 else ('down' if (btc_score.total or 50) > 70 else 'neutral') }}">{{ btc_score.rating }}</div>
   <p>{{ commentary.btc_narrative }}</p>
 </section>
 
 <section>
-  <h2>Holdings — what you watch today</h2>
-  <pre style="white-space: pre-wrap">{{ commentary.tickers_text }}</pre>
+  <h2>Holdings — what to watch today</h2>
+  <div class="briefblock">{{ commentary.tickers_text }}</div>
 </section>
 
 <section>
   <h2>Top 10 things today</h2>
-  <pre style="white-space: pre-wrap">{{ commentary.top_10 }}</pre>
+  <div class="briefblock">{{ commentary.top_10 }}</div>
 </section>
 
-<footer><small>Data: yfinance · CoinGecko · alternative.me · farside.co.uk · Binance. AI: Claude.</small></footer>
+<details class="glossary">
+  <summary>Glossary — what these terms actually mean</summary>
+  <dl>
+    <dt>VIX</dt><dd>Wall Street's fear gauge. Above 25 = market expects unusually large daily swings.</dd>
+    <dt>DXY</dt><dd>U.S. Dollar Index. Higher = dollar strong → headwind for stocks and BTC.</dd>
+    <dt>Funding rate</dt><dd>What perpetual-futures longs pay shorts (or vice versa). Positive = traders bullish & paying to hold longs.</dd>
+    <dt>Long/Short ratio</dt><dd>Share of retail futures accounts net long vs net short. &gt;1 = more longs than shorts.</dd>
+    <dt>ETF net flow</dt><dd>Money entering (positive) or leaving (negative) U.S. spot BTC ETFs today, in USD millions.</dd>
+    <dt>F&amp;G</dt><dd>Composite "how scared / how greedy is the crowd" index. 0 = panic, 100 = euphoria.</dd>
+  </dl>
+</details>
+
+<footer><small>Data: yfinance · CoinGecko · alternative.me · farside.co.uk · Binance public. AI: Claude.</small></footer>
 </body></html>
