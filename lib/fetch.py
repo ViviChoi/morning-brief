@@ -4,6 +4,12 @@ Callers compose: a partial dict with `None` values is preferable to crashing.
 """
 from __future__ import annotations
 
+import warnings
+
+# yfinance triggers pandas chained-assignment FutureWarnings on every ticker
+# fetch. Suppress them here so launcher windows don't fill with red text.
+warnings.filterwarnings("ignore", category=FutureWarning, module=r"yfinance.*")
+
 import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
