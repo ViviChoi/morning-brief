@@ -1,0 +1,8 @@
+{
+  "bitcoin": {"usd": 68500.12, "usd_24h_change": -1.8},
+  "ethereum": {"usd": 3625.44, "usd_24h_change": -0.6},
+  "solana": {"usd": 152.10, "usd_24h_change": 2.1},
+  "binancecoin": {"usd": 580.34, "usd_24h_change": 0.4},
+  "hyperliquid": {"usd": 28.15, "usd_24h_change": 5.7},
+  "bittensor": {"usd": 280.50, "usd_24h_change": -3.2}
+}
