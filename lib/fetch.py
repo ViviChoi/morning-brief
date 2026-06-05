@@ -65,3 +65,33 @@ def fetch_equity_quotes(symbols: list[str]) -> dict:
         except Exception:
             continue
     return out
+
+
+def fetch_btc_funding_rate() -> float | None:
+    try:
+        r = requests.get(
+            "https://fapi.binance.com/fapi/v1/premiumIndex",
+            params={"symbol": "BTCUSDT"},
+            timeout=_TIMEOUT,
+        )
+        r.raise_for_status()
+        data = r.json()
+        if isinstance(data, list):
+            data = data[0]
+        return float(data["lastFundingRate"])
+    except Exception:
+        return None
+
+
+def fetch_btc_long_short_ratio() -> float | None:
+    try:
+        r = requests.get(
+            "https://fapi.binance.com/futures/data/globalLongShortAccountRatio",
+            params={"symbol": "BTCUSDT", "period": "1d", "limit": 1},
+            timeout=_TIMEOUT,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return float(data[0]["longShortRatio"])
+    except Exception:
+        return None
