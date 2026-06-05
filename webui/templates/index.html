@@ -1,34 +1,175 @@
-<!DOCTYPE html><html><head>
-<meta charset="utf-8"><title>Portfolio Explorer</title>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Portfolio Explorer</title>
 <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css"
       integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU"
       crossorigin="anonymous">
-</head><body><main class="container">
-<h1>Portfolio Explorer</h1>
-<p>Drag-drop a CSV (IBKR / Binance / Coinbase / generic) below.</p>
-<form id="f" enctype="multipart/form-data">
-  <input type="file" id="csv" accept=".csv">
-  <button type="button" onclick="upload()">Analyze</button>
-</form>
-<div id="out"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"
+        integrity="sha384-Sse/HDqcypGpyTDpvZOJNnG0TT3feGQUkF9H+mnRvic+LjR+K1NhTt8f51KIQ3v3"
+        crossorigin="anonymous"></script>
+<style>
+  body { max-width: 1200px; margin: 1rem auto; padding: 0 1rem; }
+  .drop { border: 2px dashed var(--pico-muted-border-color); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; }
+  .drop.dragover { background: var(--pico-card-background-color); border-color: var(--pico-primary); }
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.2rem; }
+  @media (max-width: 800px) { .panels { grid-template-columns: 1fr; } }
+  .panel { padding: 1rem; border: 1px solid var(--pico-muted-border-color); border-radius: 10px; background: var(--pico-card-background-color); }
+  .pl-table { width: 100%; border-collapse: collapse; margin-top: .6rem; }
+  .pl-table td, .pl-table th { padding: .4rem; border-bottom: 1px solid var(--pico-muted-border-color); font-size: .9rem; }
+  .pl-bar { height: 18px; position: relative; background: #f6f8fa; border-radius: 4px; overflow: hidden; }
+  .pl-bar-fill { position: absolute; top: 0; height: 100%; }
+  .up { color: #1a7f37; } .down { color: #cf222e; }
+  .bg-up { background: #1a7f37; } .bg-down { background: #cf222e; }
+  .ai-panel { margin-top: 1rem; padding: 1.2rem; background: var(--pico-card-background-color); border-radius: 10px; }
+  .ai-panel h3 { margin: .5rem 0 .2rem; font-size: 1rem; }
+  .glossary { margin-top: 2rem; }
+</style>
+</head><body><main>
+
+<header>
+  <h1>Portfolio Explorer</h1>
+  <p>Drag-drop a broker CSV. Supported: <strong>IBKR Activity Statement</strong>, <strong>Binance Trade History</strong>, <strong>Coinbase Account</strong>. Falls back to a generic CSV if column names match.</p>
+</header>
+
+<div id="drop" class="drop">
+  <input type="file" id="csv" accept=".csv" style="display: none;">
+  <p>📂 Drop your CSV here, or click to pick</p>
+  <p id="status" style="color: var(--pico-muted-color);"></p>
+</div>
+
+<div id="results" style="display: none;">
+  <div class="panels">
+    <div class="panel">
+      <h2>Allocation</h2>
+      <canvas id="donut" height="280"></canvas>
+    </div>
+    <div class="panel">
+      <h2>P&amp;L by position</h2>
+      <table class="pl-table">
+        <thead><tr><th>Symbol</th><th>Qty</th><th>Price</th><th>P&amp;L %</th><th></th></tr></thead>
+        <tbody id="pl-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="ai-panel">
+    <h2>In plain language</h2>
+    <h3>What you hold</h3>
+    <p id="ai-what"></p>
+    <h3>What's working</h3>
+    <div id="ai-working" style="white-space: pre-wrap;"></div>
+    <h3>What's not working</h3>
+    <div id="ai-notworking" style="white-space: pre-wrap;"></div>
+    <h3>What to watch</h3>
+    <p id="ai-watch"></p>
+  </div>
+
+  <details class="glossary">
+    <summary>Glossary</summary>
+    <dl>
+      <dt>Allocation</dt><dd>How your money is split across positions, in percent of total current value.</dd>
+      <dt>P&amp;L %</dt><dd>Profit or loss compared to your average purchase price. Green = gain, red = loss.</dd>
+      <dt>Concentration risk</dt><dd>One holding being too large a share of your portfolio. If it drops, your whole portfolio drops with it.</dd>
+    </dl>
+  </details>
+</div>
+
 <script>
-async function upload(){
+'use strict';
+
+const drop = document.getElementById('drop');
+const csv = document.getElementById('csv');
+drop.addEventListener('click', () => csv.click());
+['dragover','dragenter'].forEach(e => drop.addEventListener(e, ev => {ev.preventDefault(); drop.classList.add('dragover');}));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('dragover')));
+drop.addEventListener('drop', async ev => {
+  ev.preventDefault();
+  if(ev.dataTransfer.files[0]) await upload(ev.dataTransfer.files[0]);
+});
+csv.addEventListener('change', async () => { if(csv.files[0]) await upload(csv.files[0]); });
+
+let donutChart;
+
+async function upload(file){
+  document.getElementById('status').textContent = 'Analyzing ' + file.name + ' ...';
   const fd = new FormData();
-  const f = document.getElementById('csv').files[0];
-  if(!f) return;
-  fd.append('file', f);
-  const r = await fetch('/upload', {method:'POST', body: fd});
+  fd.append('file', file);
+  const r = await fetch('/upload', {method: 'POST', body: fd});
   if(!r.ok){
-    document.getElementById('out').textContent = 'Upload failed: ' + r.status;
+    document.getElementById('status').textContent = 'Failed: ' + r.status;
     return;
   }
   const d = await r.json();
-  const h2 = document.createElement('h2');
-  h2.textContent = d.commentary.what_you_hold;
-  const pre = document.createElement('pre');
-  pre.textContent = JSON.stringify(d.positions, null, 2);
-  document.getElementById('out').replaceChildren(h2, pre);
+  document.getElementById('status').textContent = 'Detected: ' + d.broker;
+  render(d);
+}
+
+function render(d){
+  document.getElementById('results').style.display = 'block';
+  renderDonut(d.allocation);
+  renderPLTable(d.positions);
+  document.getElementById('ai-what').textContent = d.commentary.what_you_hold || '';
+  document.getElementById('ai-working').textContent = d.commentary.working || '';
+  document.getElementById('ai-notworking').textContent = d.commentary.not_working || '';
+  document.getElementById('ai-watch').textContent = d.commentary.watch || '';
+}
+
+function renderDonut(alloc){
+  if(donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donut'), {
+    type: 'doughnut',
+    data: {
+      labels: alloc.map(a => String(a.symbol)),
+      datasets: [{ data: alloc.map(a => Number((a.weight * 100).toFixed(2))) }],
+    },
+    options: {plugins: {legend: {position: 'right'}}}
+  });
+}
+
+// XSS-safe table render: no innerHTML, no template-literal HTML interpolation.
+// Symbol is from uploaded CSV (untrusted) → textContent only.
+function renderPLTable(positions){
+  const sorted = [...positions].sort((a,b) => Math.abs(b.pnl_abs) - Math.abs(a.pnl_abs));
+  const maxAbs = Math.max(...sorted.map(p => Math.abs(Number(p.pnl_pct) || 0)), 1);
+  const tbody = document.getElementById('pl-body');
+  const rows = sorted.map(p => {
+    const pnl = Number(p.pnl_pct) || 0;
+    const cls = pnl >= 0 ? 'up' : 'down';
+    const bgcls = pnl >= 0 ? 'bg-up' : 'bg-down';
+    const widthPct = Math.min(100, Math.abs(pnl) / maxAbs * 100);
+
+    const tr = document.createElement('tr');
+
+    const symTd = document.createElement('td');
+    const symStrong = document.createElement('strong');
+    symStrong.textContent = String(p.symbol || '');
+    symTd.appendChild(symStrong);
+
+    const qtyTd = document.createElement('td');
+    qtyTd.textContent = (Number(p.qty) || 0).toFixed(4);
+
+    const priceTd = document.createElement('td');
+    priceTd.textContent = '$' + (Number(p.current_price) || 0).toFixed(2);
+
+    const pnlTd = document.createElement('td');
+    pnlTd.classList.add(cls);
+    pnlTd.textContent = pnl.toFixed(1) + '%';
+
+    const barTd = document.createElement('td');
+    const barWrap = document.createElement('div');
+    barWrap.classList.add('pl-bar');
+    const barFill = document.createElement('div');
+    barFill.classList.add('pl-bar-fill', bgcls);
+    barFill.style.setProperty('width', widthPct.toFixed(2) + '%');
+    barWrap.appendChild(barFill);
+    barTd.appendChild(barWrap);
+
+    tr.append(symTd, qtyTd, priceTd, pnlTd, barTd);
+    return tr;
+  });
+  tbody.replaceChildren(...rows);
 }
 </script>
 </main></body></html>
