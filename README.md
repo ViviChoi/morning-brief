@@ -1,9 +1,11 @@
 # Morning Brief
 
+**🌐 Live: [vivichoi.github.io/morning-brief/](https://vivichoi.github.io/morning-brief/)** — today's snapshot, auto-updated every morning by GitHub Actions. No setup, no install, just open the URL.
+
 A portable, single-folder market-intelligence tool. Two surfaces:
 
-- **Daily Brief** — automated daily snapshot of US equities + crypto + AI-written commentary, rendered as a self-contained HTML file you can share with anyone (no install, no warnings).
-- **Portfolio Explorer** — local web UI: drop a broker CSV (IBKR / Binance / Coinbase / generic), get a visualized portfolio dashboard with plain-language explanation.
+- **Daily Brief** — automated daily snapshot of US equities + crypto + AI-written commentary, rendered as a self-contained HTML file. Auto-deployed to GitHub Pages.
+- **Portfolio Explorer** — local web UI: drop a broker CSV (IBKR / Binance / Coinbase / generic), get a visualized portfolio dashboard with plain-language explanation. Runs on `127.0.0.1` only because uploading broker statements to a public server is a privacy bad idea.
 
 Both are built for non-traders: charts dominate, every term is defined, color is consistent (green = up, red = down).
 
@@ -50,19 +52,36 @@ The server binds to `127.0.0.1` only. Uploaded portfolios stay in `portfolios/` 
 
 | Platform | Run |
 |---|---|
-| macOS | `python3 morning_brief.py` or `python3 webui.py` |
-| Windows 11 | same (Python 3 from python.org or store) |
-| iPhone | Working Copy → `git pull` → tap `viewer.html` → Safari renders the latest snapshot |
+| macOS | `python3 morning_brief.py` or `python3 webui.py` — or double-click `launchers/*.command` |
+| Windows 11 | same (Python 3 from python.org or store) — or double-click `launchers/*.bat` |
+| iPhone | open [the live URL](https://vivichoi.github.io/morning-brief/) in Safari (no app needed) |
 
-## Mac mini daily schedule
+## Deployment
 
-Install a LaunchAgent that runs the Daily Brief at 08:00 Europe/Rome:
+**Primary path — GitHub Actions + GitHub Pages (already live)**
+
+The repo includes `.github/workflows/daily-snapshot.yml` that:
+- Fires every day at 06:00 UTC (≈ 08:00 Europe/Rome)
+- Runs `morning_brief.py` in a fresh Ubuntu runner
+- Publishes the resulting HTML snapshot to [vivichoi.github.io/morning-brief/](https://vivichoi.github.io/morning-brief/) via the official Pages pipeline
+
+No Mac mini, no home server, no Tailscale required. The cron lives on GitHub's infrastructure.
+
+To enable the AI commentary on the deployed dashboard, set the secret once:
+```bash
+gh secret set ANTHROPIC_API_KEY -R <your-fork>/morning-brief
+```
+Without the secret, the snapshot still publishes but the commentary fields show a placeholder.
+
+**Alternative — self-host on a Mac mini (optional)**
+
+If you'd rather run the snapshot locally and skip GitHub Actions entirely, there's a LaunchAgent installer:
 
 ```bash
 ./scripts/install_launchd.sh
 ```
 
-(See `scripts/install_launchd.sh` for details.)
+This is the original deployment path and is preserved for offline / self-host scenarios. It's mutually exclusive with the GitHub Actions path — pick one.
 
 ## Data sources
 
@@ -91,7 +110,9 @@ lib/                shared backend: fetch, score, claude_brief, claude_portfolio
 templates/          Daily Brief Jinja template
 webui/              FastAPI app + Portfolio Explorer template
 launchers/          double-click launchers — .command (Mac) + .bat (Win)
-scripts/            Mac mini launchd installer
+scripts/            self-host LaunchAgent installer (optional, alternative to GitHub Actions)
+.github/workflows/  GitHub Actions daily cron + Pages deploy (primary deploy path)
+docs/               GitHub Pages assets (about.html etc.)
 tests/              pytest suite (40 tests, all mocked, no live API calls)
 snapshots/          generated daily JSON (git-ignored)
 demos/              generated daily self-contained HTML (git-ignored)
@@ -105,7 +126,7 @@ config/watchlist.json   editable list of equity + crypto tickers
 - Fund Finance Lens — sector ETF flows + concentration tracking
 - Custom watchlist CSV/JSON upload in WebUI
 - PDF / DOCX document parsing — upload an earnings report, Claude extracts plain-language key findings
-- GitHub Pages public deploy serving `demos/`
+- ~~GitHub Pages public deploy serving `demos/`~~ ✅ shipped (see *Deployment* above)
 - Evening run at 22:00 IT (US close summary)
 - Mobile-tuned layout
 - Telegram / Mac notification on extreme readings
