@@ -1,0 +1,29 @@
+{
+  "equities": [
+    {"symbol": "NVDA", "name": "NVIDIA"},
+    {"symbol": "TSLA", "name": "Tesla"},
+    {"symbol": "GOOG", "name": "Alphabet"},
+    {"symbol": "RKLB", "name": "Rocket Lab"},
+    {"symbol": "COIN", "name": "Coinbase"},
+    {"symbol": "SMH", "name": "Semis ETF"}
+  ],
+  "crypto": [
+    {"symbol": "BTC", "coingecko_id": "bitcoin"},
+    {"symbol": "ETH", "coingecko_id": "ethereum"},
+    {"symbol": "SOL", "coingecko_id": "solana"},
+    {"symbol": "BNB", "coingecko_id": "binancecoin"},
+    {"symbol": "HYPE", "coingecko_id": "hyperliquid"},
+    {"symbol": "TAO", "coingecko_id": "bittensor"}
+  ],
+  "overview": [
+    {"symbol": "SPY", "label": "S&P 500"},
+    {"symbol": "QQQ", "label": "Nasdaq 100"},
+    {"symbol": "VOO", "label": "Vanguard S&P 500"},
+    {"symbol": "^VIX", "label": "VIX (fear gauge)"},
+    {"symbol": "DX-Y.NYB", "label": "Dollar Index"},
+    {"symbol": "GLD", "label": "Gold"},
+    {"symbol": "USO", "label": "Crude Oil"},
+    {"symbol": "BTC-USD", "label": "Bitcoin"},
+    {"symbol": "ETH-USD", "label": "Ethereum"}
+  ]
+}

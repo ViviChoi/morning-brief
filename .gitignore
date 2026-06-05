@@ -6,3 +6,10 @@ __pycache__/
 .DS_Store
 *.log
 node_modules/
+portfolios/
+snapshots/*.json
+!snapshots/.gitkeep
+demos/*.html
+!demos/.gitkeep
+.pytest_cache/
+tests/__pycache__/
