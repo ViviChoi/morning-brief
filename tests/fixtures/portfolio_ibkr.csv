@@ -1,0 +1,6 @@
+Statement,Header,Field Name,Field Value
+Statement,Data,BrokerName,Interactive Brokers
+Positions,Header,Asset Category,Symbol,Quantity,Cost Basis,Currency
+Positions,Data,Stocks,NVDA,50,20025.00,USD
+Positions,Data,Stocks,TSLA,20,5000.00,USD
+Positions,Total,,,,25025.00,USD
