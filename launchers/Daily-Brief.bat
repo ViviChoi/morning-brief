@@ -11,7 +11,7 @@ if not exist ".venv\Scripts\python.exe" (
   echo.
   echo First time? Open PowerShell in this folder and run:
   echo   python -m venv .venv
-  echo   .venv\Scripts\Activate.ps1
+  echo   .venv\Scripts\activate.bat
   echo   pip install -r requirements.txt
   echo   copy .env.example .env
   echo   REM then edit .env to add ANTHROPIC_API_KEY
