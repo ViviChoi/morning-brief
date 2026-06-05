@@ -5,6 +5,7 @@ Callers compose: a partial dict with `None` values is preferable to crashing.
 from __future__ import annotations
 
 import requests
+import yfinance as yf
 
 _TIMEOUT = 10
 
@@ -44,3 +45,23 @@ def fetch_crypto_prices(coingecko_ids: list[str]) -> dict:
         }
     except Exception:
         return {}
+
+
+def fetch_equity_quotes(symbols: list[str]) -> dict:
+    out: dict[str, dict] = {}
+    for sym in symbols:
+        try:
+            hist = yf.Ticker(sym).history(period="5d", interval="1d")
+            if hist.empty or len(hist) < 2:
+                continue
+            close_today = float(hist["Close"].iloc[-1])
+            close_prev = float(hist["Close"].iloc[-2])
+            change_pct = (close_today - close_prev) / close_prev * 100.0
+            out[sym] = {
+                "price": close_today,
+                "prev_close": close_prev,
+                "change_pct": change_pct,
+            }
+        except Exception:
+            continue
+    return out
